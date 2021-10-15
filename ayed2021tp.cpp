@@ -16,6 +16,17 @@ struct Venta {
 	float precioVenta;
 };
 
+struct NodoPila{
+    Venta info;
+    NodoPila* siguiente;
+};
+
+struct EmpleadosFinal{
+	Empleado empleado;
+	int totalRecaudado=0;
+	NodoPila* venta;
+};
+
 void crearEmpleados() {
 
 	FILE* empleados = fopen("Empleados.dat","wb+");
@@ -85,10 +96,217 @@ void mostrarVentas() {
 	fclose(ventas);
 }
 
+void inicializarVector (int& len){
+    len=0;
+}
+
+template <typename T>
+void ordenar(T arr[], int len, int (*cmpTT)(T,T)){
+    T aux;
+    for (int i=0;i<len-1;i++){
+        for(int x=0;x<len-1;x++){
+            if(cmpTT(arr[x],arr[x+1])==1){//veo si el primero es mas grande que el segundo
+                aux=arr[x];
+                arr[x]=arr[x+1];
+                arr[x+1]=aux;
+            }
+        }
+    }
+}
+
+template <typename T>
+int insertarOrdenado(T arr[], int& len, T v, int (*cmpTT)(T,T)){
+    int i=len;
+    while(i>0 and cmpTT(v,arr[i-1])==-1){
+        arr[i]=arr[i-1];
+        i--;
+    }
+    arr[i]=v;
+    len++;
+    return i;
+}
+
+template<typename T, typename K>
+int busquedaBinaria(T a[], int len, K v, int (*cmpTK)(T, K), bool& enc){
+    int ret=-1;
+    enc=false;
+    int ini=0;
+    int fin=len-1;
+    while(!enc and ini<=fin){
+        int medio=(ini+fin)/2;    
+        if(cmpTK(a[medio],v)==0){
+            ret=medio;
+            enc=true;
+        }else{
+            if(cmpTK(a[medio],v)==1){
+                fin=medio-1;
+            }
+            else{
+                ini=medio+1;
+            }
+        }
+    }
+    return ret;
+}
+
+template <typename T>
+T read(FILE* f){
+    T x;
+    fread(&x,sizeof(T),1,f);
+    return x;
+}
+
+template <typename T>
+void write(FILE* f, T v){
+    fwrite(&v,sizeof(T),1,f);
+}
+
+template <typename T>
+long filePos(FILE* f){
+    long res=ftell(f);
+    return res/sizeof(T);
+}
+
+template <typename T>
+void seek(FILE* f, int n){
+    int posicionLogica=n;
+    int posicionFisica=posicionLogica*sizeof(T);
+    fseek(f,posicionFisica,SEEK_SET);
+}
+
+template <typename T>
+long fileSize(FILE* f){
+    int aux=filePos<T>(f);
+    fseek(f,0,SEEK_END);
+    int res=filePos<T>(f);
+    seek<T>(f,aux);
+    return res;
+}
+
+template <typename T, typename K>
+int busquedaBinaria(FILE* f, K v, int (*cmpTK)(T,K)){
+    int aux=filePos<T>(f);
+    seek<T>(f,0);
+    int ret=-1;
+    bool enc=false;
+    int ini=0;
+    int fin=fileSize<T>(f)-1;
+    while(!enc and ini<=fin){
+        int medio=(ini+fin)/2;
+        seek<T>(f,medio);
+        T valorFile=read<T>(f);
+        if(cmpTK(valorFile,v)==0){
+            ret=medio;
+            enc=true;
+        }else{
+            if(cmpTK(valorFile,v)==1){
+                fin=medio-1;
+            }
+            else{
+                ini=medio+1;
+            }
+        }
+    }
+    seek<T>(f,aux);
+    return ret;
+}
+
+void inicializarPila(NodoPila*& raiz){
+    raiz=NULL;
+}
+
+void push(NodoPila*& raiz, Venta v){
+    NodoPila* puntero=new NodoPila();
+    puntero->info=v;
+    puntero->siguiente=raiz;
+    raiz=puntero;
+}
+
+Venta pop(NodoPila*& raiz){
+    NodoPila* puntero=raiz;
+    Venta info=puntero->info;
+    raiz=puntero->siguiente;
+    delete puntero;
+    return info;
+}
+
+bool estaVacia(NodoPila* raiz){
+    return raiz==NULL;
+}
+
+int cmpEmpEmp(EmpleadosFinal e1, EmpleadosFinal e2){
+	return strcmp(e1.empleado.codEmp,e2.empleado.codEmp);
+}
+
+int cmpEmpEmp2(EmpleadosFinal e1, EmpleadosFinal e2){
+	if(e1.totalRecaudado==e2.totalRecaudado){
+		return 0;
+	}
+	else{
+		if(e1.totalRecaudado>e2.totalRecaudado){
+			return -1;
+		}
+		else{
+			return 1;
+		}
+	}
+}
+
 void resolucionTp() {
 	//TODO completar aquí con la resolución del TP
 	// recordar usar la libreria string.h para el manejo de comparación y copia de valores de cadenas
 	// funciones útiles para usar: strcmp y stcpy
+	EmpleadosFinal empleados[50];
+	int lenEmpleados;
+	inicializarVector(lenEmpleados);
+
+	FILE* archivoEmpleados=fopen("Empleados.dat","rb+");
+	Empleado regEmpleado=read<Empleado>(archivoEmpleados);
+
+	while(!feof(archivoEmpleados)){
+		EmpleadosFinal regFinal;
+		regFinal.empleado=regEmpleado;
+		
+		FILE*archivoVentas=fopen("Ventas.dat","rb+");
+		Venta regVenta=read<Venta>(archivoVentas);
+		NodoPila* raizPila;
+		inicializarPila(raizPila);
+		while(!feof(archivoVentas)){
+			if(strcmp(regVenta.codEmp,regEmpleado.codEmp)==0){
+				push(raizPila,regVenta);
+				regFinal.empleado.cantProdVend++;
+				regFinal.totalRecaudado+=regVenta.precioVenta;
+			}
+			regVenta=read<Venta>(archivoVentas);
+		}
+
+		fclose(archivoVentas);
+
+		regFinal.venta=raizPila;
+
+		insertarOrdenado<EmpleadosFinal>(empleados,lenEmpleados,regFinal,cmpEmpEmp);
+
+		regEmpleado=read<Empleado>(archivoEmpleados);
+	}
+
+	fclose(archivoEmpleados);
+
+	ordenar(empleados,lenEmpleados,cmpEmpEmp2);
+
+	for(int i=0;i<lenEmpleados;i++){
+		NodoPila* raizPila=empleados[i].venta;
+		Venta venta;
+		cout<<"Codigo empleado: "<<empleados[i].empleado.codEmp<<endl;
+		cout<<"Nombre y apellido: "<<empleados[i].empleado.nombYApe<<endl;
+		cout<<"Total de productos vendidos: "<<empleados[i].empleado.cantProdVend<<endl;
+		cout<<"Total recaudado: "<<empleados[i].totalRecaudado<<endl;
+		cout<<"Productos Vendidos: "<<endl;
+		cout<<"Codigo Producto\tFecha"<<endl;
+		while(!estaVacia(raizPila)){
+			Venta venta=pop(raizPila);
+			cout<<venta.codProd<<"\t"<<venta.fecha<<endl;
+		}
+	}
 }
 
 int main() {
