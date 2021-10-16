@@ -126,89 +126,11 @@ int insertarOrdenado(T arr[], int& len, T v, int (*cmpTT)(T,T)){
     return i;
 }
 
-template<typename T, typename K>
-int busquedaBinaria(T a[], int len, K v, int (*cmpTK)(T, K), bool& enc){
-    int ret=-1;
-    enc=false;
-    int ini=0;
-    int fin=len-1;
-    while(!enc and ini<=fin){
-        int medio=(ini+fin)/2;    
-        if(cmpTK(a[medio],v)==0){
-            ret=medio;
-            enc=true;
-        }else{
-            if(cmpTK(a[medio],v)==1){
-                fin=medio-1;
-            }
-            else{
-                ini=medio+1;
-            }
-        }
-    }
-    return ret;
-}
-
 template <typename T>
 T read(FILE* f){
     T x;
     fread(&x,sizeof(T),1,f);
     return x;
-}
-
-template <typename T>
-void write(FILE* f, T v){
-    fwrite(&v,sizeof(T),1,f);
-}
-
-template <typename T>
-long filePos(FILE* f){
-    long res=ftell(f);
-    return res/sizeof(T);
-}
-
-template <typename T>
-void seek(FILE* f, int n){
-    int posicionLogica=n;
-    int posicionFisica=posicionLogica*sizeof(T);
-    fseek(f,posicionFisica,SEEK_SET);
-}
-
-template <typename T>
-long fileSize(FILE* f){
-    int aux=filePos<T>(f);
-    fseek(f,0,SEEK_END);
-    int res=filePos<T>(f);
-    seek<T>(f,aux);
-    return res;
-}
-
-template <typename T, typename K>
-int busquedaBinaria(FILE* f, K v, int (*cmpTK)(T,K)){
-    int aux=filePos<T>(f);
-    seek<T>(f,0);
-    int ret=-1;
-    bool enc=false;
-    int ini=0;
-    int fin=fileSize<T>(f)-1;
-    while(!enc and ini<=fin){
-        int medio=(ini+fin)/2;
-        seek<T>(f,medio);
-        T valorFile=read<T>(f);
-        if(cmpTK(valorFile,v)==0){
-            ret=medio;
-            enc=true;
-        }else{
-            if(cmpTK(valorFile,v)==1){
-                fin=medio-1;
-            }
-            else{
-                ini=medio+1;
-            }
-        }
-    }
-    seek<T>(f,aux);
-    return ret;
 }
 
 void inicializarPila(NodoPila*& raiz){
