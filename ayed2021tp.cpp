@@ -174,47 +174,27 @@ int cmpEmpEmp2(EmpleadosFinal e1, EmpleadosFinal e2){
 	}
 }
 
-void resolucionTp() {
-	//TODO completar aquí con la resolución del TP
-	// recordar usar la libreria string.h para el manejo de comparación y copia de valores de cadenas
-	// funciones útiles para usar: strcmp y stcpy
-	EmpleadosFinal empleados[50];
-	int lenEmpleados;
-	inicializarVector(lenEmpleados);
-
-	FILE* archivoEmpleados=fopen("Empleados.dat","rb+");
-	Empleado regEmpleado=read<Empleado>(archivoEmpleados);
-
-	while(!feof(archivoEmpleados)){
-		EmpleadosFinal regFinal;
-		regFinal.empleado=regEmpleado;
-		
-		FILE*archivoVentas=fopen("Ventas.dat","rb+");
-		Venta regVenta=read<Venta>(archivoVentas);
-		NodoPila* raizPila;
-		inicializarPila(raizPila);
-		while(!feof(archivoVentas)){
-			if(strcmp(regVenta.codEmp,regEmpleado.codEmp)==0){
-				push(raizPila,regVenta);
-				regFinal.empleado.cantProdVend++;
-				regFinal.totalRecaudado+=regVenta.precioVenta;
-			}
-			regVenta=read<Venta>(archivoVentas);
+void llenarRegistroFinal(EmpleadosFinal& regFinal, Empleado regEmpleado){
+	regFinal.empleado=regEmpleado;
+	FILE* archivoVentas=fopen("Ventas.dat","rb+");
+	Venta regVenta=read<Venta>(archivoVentas);
+	NodoPila* raizPila;
+	inicializarPila(raizPila);
+	while(!feof(archivoVentas)){
+		if(strcmp(regVenta.codEmp,regEmpleado.codEmp)==0){
+			push(raizPila,regVenta);
+			regFinal.empleado.cantProdVend++;
+			regFinal.totalRecaudado+=regVenta.precioVenta;
 		}
-
-		fclose(archivoVentas);
-
-		regFinal.venta=raizPila;
-
-		insertarOrdenado<EmpleadosFinal>(empleados,lenEmpleados,regFinal,cmpEmpEmp);
-
-		regEmpleado=read<Empleado>(archivoEmpleados);
+		regVenta=read<Venta>(archivoVentas);
 	}
 
-	fclose(archivoEmpleados);
+	fclose(archivoVentas);
 
-	ordenar(empleados,lenEmpleados,cmpEmpEmp2);
+	regFinal.venta=raizPila;
+}
 
+void mostrarResultado(EmpleadosFinal empleados[],int lenEmpleados){
 	for(int i=0;i<lenEmpleados;i++){
 		NodoPila* raizPila=empleados[i].venta;
 		Venta venta;
@@ -229,6 +209,34 @@ void resolucionTp() {
 			cout<<venta.codProd<<"\t"<<venta.fecha<<endl;
 		}
 	}
+}
+
+void resolucionTp() {
+	//TODO completar aquí con la resolución del TP
+	// recordar usar la libreria string.h para el manejo de comparación y copia de valores de cadenas
+	// funciones útiles para usar: strcmp y stcpy
+	EmpleadosFinal empleados[50];
+	int lenEmpleados;
+	inicializarVector(lenEmpleados);
+
+	FILE* archivoEmpleados=fopen("Empleados.dat","rb+");
+	Empleado regEmpleado=read<Empleado>(archivoEmpleados);
+
+	while(!feof(archivoEmpleados)){
+		EmpleadosFinal regFinal;
+	
+		llenarRegistroFinal(regFinal,regEmpleado);
+
+		insertarOrdenado<EmpleadosFinal>(empleados,lenEmpleados,regFinal,cmpEmpEmp);
+
+		regEmpleado=read<Empleado>(archivoEmpleados);
+	}
+
+	fclose(archivoEmpleados);
+
+	ordenar(empleados,lenEmpleados,cmpEmpEmp2);
+
+	mostrarResultado(empleados,lenEmpleados);
 }
 
 int main() {
