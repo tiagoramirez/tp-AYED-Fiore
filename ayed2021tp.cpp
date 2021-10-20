@@ -16,15 +16,16 @@ struct Venta {
 	float precioVenta;
 };
 
+template <typename T>
 struct NodoPila{
-    Venta info;
-    NodoPila* siguiente;
+    T info;
+    NodoPila<T>* siguiente;
 };
 
 struct EmpleadosFinal{
 	Empleado empleado;
 	int totalRecaudado=0;
-	NodoPila* venta;
+	NodoPila<Venta>* venta;
 };
 
 void crearEmpleados() {
@@ -133,27 +134,31 @@ T read(FILE* f){
     return x;
 }
 
-void inicializarPila(NodoPila*& raiz){
+template <typename T>
+void inicializarPila(NodoPila<T>*& raiz){
     raiz=NULL;
 }
 
-void push(NodoPila*& raiz, Venta v){
-    NodoPila* puntero=new NodoPila();
+template <typename T>
+bool estaVacia(NodoPila<T>* raiz){
+    return raiz==NULL;
+}
+
+template <typename T>
+void push(NodoPila<T>*& raiz, T v){
+    NodoPila<T>* puntero=new NodoPila<T>();
     puntero->info=v;
     puntero->siguiente=raiz;
     raiz=puntero;
 }
 
-Venta pop(NodoPila*& raiz){
-    NodoPila* puntero=raiz;
-    Venta info=puntero->info;
+template <typename T>
+T pop(NodoPila<T>*& raiz){
+    NodoPila<T>* puntero=raiz;
+    T info=puntero->info;
     raiz=puntero->siguiente;
     delete puntero;
     return info;
-}
-
-bool estaVacia(NodoPila* raiz){
-    return raiz==NULL;
 }
 
 int cmpEmpEmp(EmpleadosFinal e1, EmpleadosFinal e2){
@@ -178,11 +183,11 @@ void llenarRegistroFinal(EmpleadosFinal& regFinal, Empleado regEmpleado){
 	regFinal.empleado=regEmpleado;
 	FILE* archivoVentas=fopen("Ventas.dat","rb+");
 	Venta regVenta=read<Venta>(archivoVentas);
-	NodoPila* raizPila;
-	inicializarPila(raizPila);
+	NodoPila<Venta>* raizPila;
+	inicializarPila<Venta>(raizPila);
 	while(!feof(archivoVentas)){
 		if(strcmp(regVenta.codEmp,regEmpleado.codEmp)==0){
-			push(raizPila,regVenta);
+			push<Venta>(raizPila,regVenta);
 			regFinal.empleado.cantProdVend++;
 			regFinal.totalRecaudado+=regVenta.precioVenta;
 		}
@@ -196,7 +201,7 @@ void llenarRegistroFinal(EmpleadosFinal& regFinal, Empleado regEmpleado){
 
 void mostrarResultado(EmpleadosFinal empleados[],int lenEmpleados){
 	for(int i=0;i<lenEmpleados;i++){
-		NodoPila* raizPila=empleados[i].venta;
+		NodoPila<Venta>* raizPila=empleados[i].venta;
 		Venta venta;
 		cout<<"Codigo empleado: "<<empleados[i].empleado.codEmp<<endl;
 		cout<<"Nombre y apellido: "<<empleados[i].empleado.nombYApe<<endl;
@@ -204,8 +209,8 @@ void mostrarResultado(EmpleadosFinal empleados[],int lenEmpleados){
 		cout<<"Total recaudado: "<<empleados[i].totalRecaudado<<endl;
 		cout<<"Productos Vendidos: "<<endl;
 		cout<<"Codigo Producto\tFecha"<<endl;
-		while(!estaVacia(raizPila)){
-			Venta venta=pop(raizPila);
+		while(!estaVacia<Venta>(raizPila)){
+			Venta venta=pop<Venta>(raizPila);
 			cout<<venta.codProd<<"\t"<<venta.fecha<<endl;
 		}
 	}
